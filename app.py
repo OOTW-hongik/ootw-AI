@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, jsonify
+from flask import Flask, request, Response, jsonify, abort
 from fastai.vision.all import *
 from PIL import Image
 import rembg
@@ -7,6 +7,7 @@ from contextlib import contextmanager
 import pathlib
 import json
 import multipart
+from flask_cors import CORS
 
 @contextmanager
 def set_posix_windows():
@@ -56,10 +57,13 @@ def random_resized_crop(img, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.)):
     img = img.resize((size, size), Image.BILINEAR)
     return img
 
+# ALLOWED_ORIGINS = ["http://localhost:3000"] # Input frontend origin in [""]
+# CORS(app, resources={r"/upload": {"origins": ALLOWED_ORIGINS}})
+
 @app.route('/remove_background', methods=['POST'])
 def remove_background():
     if 'image' not in request.files:
-        return jsonify({'error': 'No image provided'})
+        abort(400, description="No image provided")
 
     image = request.files['image'].read()
     img = PILImage.create(image)
