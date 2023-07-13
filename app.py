@@ -3,20 +3,20 @@ from fastai.vision.all import *
 from PIL import Image
 import rembg
 import io
-from contextlib import contextmanager
 import pathlib
 import json
 import multipart
 from flask_cors import CORS
 
-@contextmanager
-def set_posix_windows():
-    posix_backup = pathlib.PosixPath
-    try:
-        pathlib.PosixPath = pathlib.WindowsPath
-        yield
-    finally:
-        pathlib.PosixPath = posix_backup
+# from contextlib import contextmanager
+# @contextmanager
+# def set_posix_windows():
+#     posix_backup = pathlib.PosixPath
+#     try:
+#         pathlib.PosixPath = pathlib.WindowsPath
+#         yield
+#     finally:
+#         pathlib.PosixPath = posix_backup
 
 app = Flask(__name__)
 
