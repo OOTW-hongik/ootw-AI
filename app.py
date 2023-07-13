@@ -1,6 +1,7 @@
 from flask import Flask, request, Response, jsonify, abort
 from fastai.vision.all import *
 from PIL import Image
+import sys
 import rembg
 import io
 import pathlib
@@ -18,6 +19,9 @@ from getxy import get_x, get_y
 #         yield
 #     finally:
 #         pathlib.PosixPath = posix_backup
+
+sys.modules['__main__'].get_x = get_x
+sys.modules['__main__'].get_y = get_y
 
 app = Flask(__name__)
 
