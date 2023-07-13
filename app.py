@@ -7,6 +7,7 @@ import pathlib
 import json
 import multipart
 from flask_cors import CORS
+from getxy import get_x, get_y
 
 # from contextlib import contextmanager
 # @contextmanager
@@ -18,17 +19,11 @@ from flask_cors import CORS
 #     finally:
 #         pathlib.PosixPath = posix_backup
 
+app = Flask(__name__)
+
 # EXPORT_PATH = pathlib.Path("export_mk4.pkl")
 # with set_posix_windows():
 #     model = load_learner(EXPORT_PATH)
-
-app = Flask(__name__)
-
-def get_x(r):
-    return r
-def get_y(r):
-    return r
-
 model = load_learner("export_mk4.pkl")
 
 def random_resized_crop(img, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.)):
