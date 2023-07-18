@@ -61,6 +61,10 @@ def random_resized_crop(img, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.)):
 # ALLOWED_ORIGINS = ["http://localhost:3000"] # Input frontend origin in [""]
 # CORS(app, resources={r"/upload": {"origins": ALLOWED_ORIGINS}})
 
+@app.route("/")
+def hello():
+    return "Hello"
+
 @app.route('/remove_background', methods=['POST'])
 def remove_background():
     if 'image' not in request.files:
