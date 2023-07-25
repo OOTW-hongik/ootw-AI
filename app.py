@@ -6,28 +6,28 @@ import rembg
 import io
 import pathlib
 import json
-import multipart
+from requests_toolbelt import MultipartEncoder
 from flask_cors import CORS
 from getxy import get_x, get_y
 
-# from contextlib import contextmanager
-# @contextmanager
-# def set_posix_windows():
-#     posix_backup = pathlib.PosixPath
-#     try:
-#         pathlib.PosixPath = pathlib.WindowsPath
-#         yield
-#     finally:
-#         pathlib.PosixPath = posix_backup
+from contextlib import contextmanager
+@contextmanager
+def set_posix_windows():
+    posix_backup = pathlib.PosixPath
+    try:
+        pathlib.PosixPath = pathlib.WindowsPath
+        yield
+    finally:
+        pathlib.PosixPath = posix_backup
 
 sys.modules['__main__'].get_x = get_x
 sys.modules['__main__'].get_y = get_y
 
 app = Flask(__name__)
 
-# EXPORT_PATH = pathlib.Path("export_mk4.pkl")
-# with set_posix_windows():
-#     model = load_learner(EXPORT_PATH)
+EXPORT_PATH = pathlib.Path("export_mk4.pkl")
+with set_posix_windows():
+    model = load_learner(EXPORT_PATH)
 model = load_learner("export_mk4.pkl")
 
 def random_resized_crop(img, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.)):
@@ -71,29 +71,40 @@ def remove_background():
         abort(400, description="No image provided")
 
     image = request.files['image'].read()
+    img = Image.open(io.BytesIO(image))
+
+    # Check if the image is JPEG
+    if img.format == 'JPEG':
+        # Convert it to PNG
+        img = img.convert('RGB')
+        with io.BytesIO() as output:
+            img.save(output, format="PNG")
+            image = output.getvalue()
     img = PILImage.create(image)
 
     # Image Classification
     img_resized = random_resized_crop(img, 128, scale=(0.7, 1.0))
     pred_class, pred_idx, outputs = model.predict(img_resized)
-    cloth_class = {'cloth_class' : pred_class}
+    cloth_class = pred_class.items[0]
 
     # Remove Background
     result = rembg.remove(image)
 
-    # Save result as bytes
-    img = Image.open(io.BytesIO(result))
-    img_io = io.BytesIO()
-    img.save(img_io, 'JPEG')
-    img_io.seek(0)
+    result_img = Image.open(io.BytesIO(result))
+    with io.BytesIO() as output:
+        result_img.convert('RGB').save(output, format="JPEG")
+        result = output.getvalue()
 
     # Multipart Data Create
-    form_data = multipart.Multipart()
-    form_data.field("image", img_io.getvalue(), "result.jpeg", "image/jpeg")   
-    form_data.field("cloth_class", json.dumps(cloth_class), "cloth_class.json", "application/json")
+    form_data = MultipartEncoder(
+        fields={
+            "image": ("result.jpeg", result, "image/jpeg"),
+            "cloth_class": ("cloth_class.txt", cloth_class, "text/plain")
+        }
+    )
     
-    headers = {"Content-Type": f"multipart/form-data; boundary={form_data.boundary}"}
-    response = Response(form_data, headers=headers)
+    headers = {"Content-Type": form_data.content_type}
+    response = Response(form_data.to_string(), headers=headers)
 
     return response
 
